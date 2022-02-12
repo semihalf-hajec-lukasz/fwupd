@@ -33,3 +33,7 @@ Flags = no-coalesce
 # Dynabook (né Toshiba) X30, X40
 [28108d08-5027-42c2-a5b8-92d6ede9b97b]
 VersionFormat = bcd
+
+# HP M60 Workstation
+[99b4f553-7b35-44ea-a203-520cd254dc52]
+Flags = no-capsule-header-fixup
