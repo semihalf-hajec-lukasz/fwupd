@@ -16,7 +16,7 @@ except ValueError:
     print("Missing gobject-introspection packages.  Try to install gir1.2-fwupd-2.0.")
     sys.exit(1)
 from gi.repository import Fwupd  # pylint: disable=wrong-import-position
-from simple_client import install, check_exists
+from simple_client import get_daemon_property, install, check_exists, modify_config
 from add_capsule_header import add_header
 from firmware_packager import make_firmware_metainfo, create_firmware_cab
 
@@ -81,6 +81,17 @@ def find_uefi_device(client, deviceid):
     sys.exit(1)
 
 
+def set_conf_only_trusted(client, setval):
+    prop = "OnlyTrusted"
+    curval = get_daemon_property(prop)
+    if curval is None:
+        print("Can't determine %s via D-Bus, please turn it off manually" % prop)
+    elif curval or setval:
+        modify_config(client, prop, str(setval).lower())
+        return get_daemon_property(prop) == setval
+    return False
+
+
 def prompt_reboot():
     print("An update requires a reboot to complete")
     while True:
@@ -101,8 +112,11 @@ if __name__ == "__main__":
     ARGS = parse_args()
     CLIENT = Fwupd.Client()
     check_exists(ARGS.exe)
+    is_restore_required = set_conf_only_trusted(CLIENT, False)
     directory = tempfile.mkdtemp()
     guid, deviceid, version = find_uefi_device(CLIENT, ARGS.deviceid)
     cab = generate_cab(ARGS.exe, directory, guid, version)
     install(CLIENT, cab, deviceid, True, True)
+    if is_restore_required:
+        set_conf_only_trusted(CLIENT, True)
     prompt_reboot()

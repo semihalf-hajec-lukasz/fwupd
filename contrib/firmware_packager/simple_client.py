@@ -3,6 +3,7 @@
 """A simple fwupd frontend"""
 import sys
 import os
+import dbus
 import gi
 from gi.repository import GLib
 
@@ -110,6 +111,16 @@ def device_changed(client, device, progress):  # pylint: disable=unused-argument
     progress.device_changed(device.get_name())
 
 
+def modify_config(client, key, value):
+    """Use fwupd client to modify daemon configuration value"""
+    try:
+        client.modify_config(key, value, None)
+    except Exception as e:
+        print("%s" % str(e))
+        sys.exit(1)
+    print("\n")
+
+
 def install(client, cab, target, older, reinstall):
     """Use fwupd client to install CAB file to applicable devices"""
     # FWUPD_DEVICE_ID_ANY
@@ -132,6 +143,17 @@ def install(client, cab, target, older, reinstall):
         print("%s" % glib_err)
         sys.exit(1)
     print("\n")
+
+
+def get_daemon_property(key: str):
+    try:
+        bus = dbus.SystemBus()
+        proxy = bus.get_object(bus_name="org.freedesktop.fwupd", object_path="/")
+        iface = dbus.Interface(proxy, "org.freedesktop.DBus.Properties")
+        return iface.Get("org.freedesktop.fwupd", key)
+    except dbus.DBusException as e:
+        print(e)
+    return None
 
 
 def check_exists(cab):
