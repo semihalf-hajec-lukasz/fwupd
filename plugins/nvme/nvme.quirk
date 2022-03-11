@@ -29,3 +29,15 @@ Flags = signed-payload
 # SK Hynix
 [NVME\VEN_1C5C]
 Flags = signed-payload
+
+# Western Digital
+[NVME\VEN_101C]
+Flags = signed-payload
+
+# HGST -> Western Digital
+[NVME\VEN_1C58]
+Flags = signed-payload
+
+# Sandisk -> Western Digital
+[NVME\VEN_15B7]
+Flags = signed-payload
