@@ -73,7 +73,9 @@ if get_option('tests')
   )
   test('tpm-self-test', e, env: env)
 endif
+endif
 
+if get_option('plugin_tpm').allowed()
 executable(
   'fwupdtpmevlog',
   fu_hash,
