@@ -82,6 +82,11 @@ typedef struct __attribute__((packed)) {
 	guint8 update_fw_time[12]; /* YYYYMMDDhhmm */
 } FuGenesysFirmwareInfoToolString;
 
+typedef struct __attribute__((packed)) {
+	guint8 version[2];
+	guint8 supports[29];
+} FuGenesysVendorSupportToolString;
+
 typedef enum {
 	BANK_MASK_CODE,
 	BANK_FIRST,
@@ -99,6 +104,7 @@ struct _FuGenesysUsbhubDevice {
 	FuGenesysStaticToolString static_ts;
 	FuGenesysDynamicToolString dynamic_ts;
 	FuGenesysFirmwareInfoToolString fwinfo_ts;
+	FuGenesysVendorSupportToolString vs_ts;
 	FuGenesysVendorCommandSetting vcs;
 	FuGenesysChip chip;
 	guint32 running_bank;
@@ -881,6 +887,20 @@ fu_genesys_usbhub_device_setup(FuDevice *device, GError **error)
 			g_prefix_error(error, "failed to get vendor support info from device: ");
 			return FALSE;
 		}
+		if (!fu_genesys_usbhub_device_get_descriptor_data(
+			vendor_buf,
+			(guint8 *)&self->vs_ts,
+			sizeof(FuGenesysVendorSupportToolString),
+			error)) {
+			g_prefix_error(error, "failed to get vendor support info from device: ");
+			return FALSE;
+		}
+		if (g_getenv("FWUPD_GENESYS_USBHUB_VERBOSE") != NULL) {
+			fu_common_dump_raw(G_LOG_DOMAIN,
+					   "Vendor support",
+					   (guint8 *)&self->vs_ts,
+					   sizeof(FuGenesysVendorSupportToolString));
+		}
 	}
 
 	if (fu_device_has_private_flag(device, FU_GENESYS_USBHUB_FLAG_HAS_PUBLIC_KEY)) {
@@ -1007,9 +1027,51 @@ fu_genesys_usbhub_device_setup(FuDevice *device, GError **error)
 					    sizeof(self->public_key),
 					    FWUPD_GUID_FLAG_NONE);
 		fu_device_add_instance_strup(device, "PUBKEY", guid);
-	}
+		if (!fu_device_build_instance_id(device, NULL, "USB", "VID", "PID", "PUBKEY", NULL))
+			return FALSE;
+	} else {
+		/* add specific product info */
+		g_autofree gchar *ic = NULL;
+		ic = fu_common_strsafe((const gchar *)self->static_ts.mask_project_ic_type,
+				       sizeof(self->static_ts.mask_project_ic_type));
+		fu_device_add_instance_str(device, "IC", ic);
+		fu_device_add_instance_u8(device, "BONDING", self->bonding);
 
-	fu_device_build_instance_id(device, NULL, "USB", "VID", "PID", "PUBKEY", NULL);
+		if (self->running_bank == BANK_MASK_CODE) {
+			if (!fu_device_build_instance_id(device,
+							 NULL,
+							 "USB",
+							 "VID",
+							 "PID",
+							 "IC",
+							 "BONDING",
+							 NULL))
+				return FALSE;
+		} else {
+			const gchar *vendor = fwupd_device_get_vendor(FWUPD_DEVICE(device));
+			guint16 port_num = (self->dynamic_ts.ss_port_number << 8) +
+					   self->dynamic_ts.hs_port_number;
+			g_autofree gchar *guid = NULL;
+			guid = fwupd_guid_hash_data((const guint8 *)&self->vs_ts,
+						    sizeof(self->vs_ts),
+						    FWUPD_GUID_FLAG_NONE);
+			fu_device_add_instance_strup(device, "VENDOR", vendor);
+			fu_device_add_instance_u16(device, "PORTNUM", port_num);
+			fu_device_add_instance_strup(device, "VENDORSUP", guid);
+			if (!fu_device_build_instance_id(device,
+							 NULL,
+							 "USB",
+							 "VID",
+							 "PID",
+							 "VENDOR",
+							 "IC",
+							 "BONDING",
+							 "PORTNUM",
+							 "VENDORSUP",
+							 NULL))
+				return FALSE;
+		}
+	}
 
 	/* have MStar scaler */
 	if (fu_device_has_private_flag(device, FU_GENESYS_USBHUB_FLAG_HAS_MSTAR_SCALER))
