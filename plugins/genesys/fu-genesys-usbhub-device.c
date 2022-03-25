@@ -780,6 +780,14 @@ fu_genesys_usbhub_device_setup(FuDevice *device, GError **error)
 				   (guint8 *)&self->static_ts,
 				   sizeof(FuGenesysStaticToolString));
 	}
+	if (memcmp(&self->static_ts, "USB", 3) == 0) {
+		g_set_error(error,
+			    FWUPD_ERROR,
+			    FWUPD_ERROR_NOT_SUPPORTED,
+			    "Unsupported IC: tool string unsupported");
+		return FALSE;
+	}
+
 	if (self->static_ts.tool_string_version != 0xff) {
 		gchar rev[3] = {0};
 
