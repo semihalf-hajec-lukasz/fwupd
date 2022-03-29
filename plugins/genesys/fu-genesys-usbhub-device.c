@@ -251,6 +251,9 @@ fu_genesys_usbhub_device_cfi_setup(FuGenesysUsbhubDevice *self, GError **error)
 			}
 
 			flash_id = g_strdup_printf("%02X%02X%02X", buf[0], buf[1], buf[2]);
+			if (g_getenv("FWUPD_GENESYS_USBHUB_VERBOSE") != NULL)
+				g_debug("flash RDID: 0x%02x %s", rdid_cmd[i], flash_id);
+
 			cfi_device =
 			    fu_cfi_device_new(fu_device_get_context(FU_DEVICE(self)), flash_id);
 			if (cfi_device == NULL)

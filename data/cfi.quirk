@@ -35,6 +35,11 @@ Name = MX25Lxxx1E
 CfiDeviceCmdChipErase = 0x60
 CfiDeviceCmdSectorErase = 0x20
 
+[CFI\FLASHID_C22312]
+Name = MX25V2035F
+CfiDeviceCmdChipErase = 0x60
+CfiDeviceCmdSectorErase = 0x20
+
 [CFI\FLASHID_00BF]
 Name = PCT/SST25VFxxx/xxxA
 CfiDeviceCmdReadId = 0x90
@@ -53,8 +58,20 @@ CfiDeviceCmdReadId = 0xAB
 CfiDeviceCmdChipErase = 0xC7
 CfiDeviceCmdSectorErase = 0xD7
 
+[CFI\FLASHID_9D05]
+Name = PM25Lx512
+CfiDeviceCmdReadId = 0x90
+CfiDeviceCmdChipErase = 0xC7
+CfiDeviceCmdSectorErase = 0x20
+
 [CFI\FLASHID_00EF]
 Name = W25XxxBV/W25XxxCL
+CfiDeviceCmdChipErase = 0xC7
+CfiDeviceCmdSectorErase = 0x20
+
+[CFI\FLASHID_EF05]
+Name = W25X05CL
+CfiDeviceCmdReadId = 0x90
 CfiDeviceCmdChipErase = 0xC7
 CfiDeviceCmdSectorErase = 0x20
 
